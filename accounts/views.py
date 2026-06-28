@@ -4,6 +4,9 @@ from .models import Account
 from django.contrib import messages, auth
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
+from carts.views import _cart_id
+from carts.models import Cart,CardItem
+from urllib.parse import parse_qs, urlparse
 
 from django.contrib.sites.shortcuts import get_current_site
 from django.template.loader import render_to_string
@@ -11,7 +14,7 @@ from django.utils.http import urlsafe_base64_encode,urlsafe_base64_decode
 from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMessage
-
+import requests
 
 def register(request):
 
@@ -84,7 +87,11 @@ def register(request):
     return render(request, 'accounts/register.html', context)
 
 
+
+
+
 def login(request):
+    
     if request.method == 'POST':
         email = request.POST['email']
         password = request.POST['password']
@@ -92,15 +99,53 @@ def login(request):
         user = auth.authenticate(email=email, password=password)
 
         if user is not None:
+            try:
+                cart = Cart.objects.get(cart_id=_cart_id(request))
+
+                cart_items = CardItem.objects.filter(cart=cart)
+
+                for cart_item in cart_items:
+
+                    guest_variations = list(cart_item.variations.all())
+
+                    try:
+                        user_cart_item = CardItem.objects.get(
+                            user=user,
+                            Product=cart_item.Product
+                        )
+
+                        user_variations = list(user_cart_item.variations.all())
+
+                        if guest_variations == user_variations:
+                            user_cart_item.quantity += cart_item.quantity
+                            user_cart_item.save()
+                            cart_item.delete()
+                        else:
+                            cart_item.user = user
+                            cart_item.cart = None
+                            cart_item.save()
+
+                    except CardItem.DoesNotExist:
+                        cart_item.user = user
+                        cart_item.cart = None
+                        cart_item.save()
+
+            except Cart.DoesNotExist:
+                pass
+
             auth.login(request, user)
-            messages.success(request, 'You are now logged in.')
+            messages.success(request, "You are now logged in.")
+
+            next_url = request.GET.get('next')
+            if next_url:
+                return redirect(next_url)
+
             return redirect('dashboard')
-        else:
-            messages.error(request, 'Invalid login credentials.')
-            return redirect('login')
+
+        messages.error(request, 'Invalid login credentials.')
+        return redirect('login')
 
     return render(request, 'accounts/login.html')
-
 
 @login_required(login_url='login')
 def logout(request):
