@@ -91,7 +91,7 @@ def register(request):
 
 
 def login(request):
-    
+
     if request.method == 'POST':
         email = request.POST['email']
         password = request.POST['password']
@@ -101,31 +101,30 @@ def login(request):
         if user is not None:
             try:
                 cart = Cart.objects.get(cart_id=_cart_id(request))
-
                 cart_items = CardItem.objects.filter(cart=cart)
 
                 for cart_item in cart_items:
 
                     guest_variations = list(cart_item.variations.all())
 
-                    try:
-                        user_cart_item = CardItem.objects.get(
-                            user=user,
-                            Product=cart_item.Product
-                        )
+                    user_cart_items = CardItem.objects.filter(
+                        user=user,
+                        Product=cart_item.Product      # Change to product if your field name is product
+                    )
 
+                    matched = False
+
+                    for user_cart_item in user_cart_items:
                         user_variations = list(user_cart_item.variations.all())
 
                         if guest_variations == user_variations:
                             user_cart_item.quantity += cart_item.quantity
                             user_cart_item.save()
                             cart_item.delete()
-                        else:
-                            cart_item.user = user
-                            cart_item.cart = None
-                            cart_item.save()
+                            matched = True
+                            break
 
-                    except CardItem.DoesNotExist:
+                    if not matched:
                         cart_item.user = user
                         cart_item.cart = None
                         cart_item.save()
@@ -134,7 +133,7 @@ def login(request):
                 pass
 
             auth.login(request, user)
-            messages.success(request, "You are now logged in.")
+            messages.success(request, 'You are now logged in.')
 
             next_url = request.GET.get('next')
             if next_url:
@@ -142,11 +141,12 @@ def login(request):
 
             return redirect('dashboard')
 
-        messages.error(request, 'Invalid login credentials.')
-        return redirect('login')
+        else:
+            messages.error(request, 'Invalid login credentials.')
+            return redirect('login')
 
     return render(request, 'accounts/login.html')
-
+    
 @login_required(login_url='login')
 def logout(request):
     auth.logout(request)

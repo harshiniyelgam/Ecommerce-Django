@@ -1,0 +1,21 @@
+{% autoescape off %}
+
+Hi {{ user.first_name }},
+<h2>Thank You for Your Order!</h2>
+
+
+    <p>
+       Thank you for shopping with us. Your order has been placed successfully.
+    </p>
+<h3>Order Details</h3>
+
+    <p><strong>Order Number:</strong> {{ order.order_number }}</p>
+    <p><strong>Order Total:</strong> ₹{{ order.order_total }}</p>
+    <p><strong>Payment Status:</strong> {{ order.payment.status }}</p>
+
+    <p>
+        We will notify you once your order has been shipped.
+</p>
+
+
+{% endautoescape %}

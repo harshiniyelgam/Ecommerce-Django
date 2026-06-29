@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'accounts',
     'store',
     'carts',
+    'orders',
 ]
 
 MIDDLEWARE = [
@@ -150,3 +151,5 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = 'yelgamharshini@gmail.com'
 EMAIL_HOST_PASSWORD = 'nicb iwti qfbn rghj'
 EMAIL_USE_TLS = True
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
