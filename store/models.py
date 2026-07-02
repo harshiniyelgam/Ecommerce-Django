@@ -22,17 +22,15 @@ class product(models.Model):
     def __str__(self):
         return self.product_name
     
+
     def averageReview(self):
-        reviews = ReviewRating.objects.filter(
-        product=self,
-        status=True).aggregate(average=Avg('rating'))
+        reviews = ReviewRating.objects.filter(product=self,status=True ).aggregate(average=Avg('rating'))
 
         avg = 0
-
-        if reviews['average'] is not None:
+        if reviews['average']:
             avg = float(reviews['average'])
 
-        return avg  
+            return avg
 
   
 class VariationManager(models.Manager):
@@ -86,3 +84,20 @@ class ReviewRating(models.Model):
 
     def __str__(self):
         return self.subject
+
+class ProductGallery(models.Model):
+    product = models.ForeignKey(
+        product,
+        default=None,
+        on_delete=models.CASCADE
+    )
+    image = models.ImageField(
+        upload_to='store/products',
+        max_length=255
+    )
+
+    def __str__(self):
+        return self.product.product_name  
+    class Meta:
+        verbose_name = 'ProductGallery'
+        verbose_name_plural = 'productgallery'          
